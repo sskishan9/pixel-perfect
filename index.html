@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Access Control Management | Admin Panel</title>
+  <style>
+    /* Global Reset & Base Typography */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+    body {
+      font-family: 'Segoe UI', -apple-system, BlinkMacSystemFont, Arial, sans-serif;
+      font-size: 13px;
+      background-color: #f0f2f5;
+      color: #333333;
+      min-height: 100vh;
+    }
+
+    /* Primary Navigation Layout (Sidebar) */
+    .app-sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 48px;
+      height: 100vh;
+      background: #1a3a6e;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 14px;
+      gap: 8px;
+      z-index: 100;
+    }
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: #ffffff;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #1a3a6e;
+      font-size: 12px;
+      margin-bottom: 8px;
+    }
+    .nav-item {
+      width: 36px;
+      height: 36px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 16px;
+      transition: all 0.2s ease;
+    }
+    .nav-item:hover, .nav-item.is-active {
+      background: rgba(255, 255, 255, 0.15);
+      color: #ffffff;
+    }
+    .nav-item.is-active {
+      background: #2563c7;
+    }
+
+    /* Screen Wrap Constraints */
+    .workspace-wrapper {
+      margin-left: 48px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* Top Horizontal Bar */
+    .header-bar {
+      background: #ffffff;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0 20px;
+      border-bottom: 1px solid #dde2ea;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+    }
+    .header-title {
+      font-size: 14px;
+      font-weight: 700;
+      color: #1a3a6e;
+      margin-right: 20px;
+    }
+    .breadcrumb-trail {
+      font-size: 12px;
+      color: #6b7a93;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+    .breadcrumb-trail a {
+      color: #2563c7;
+      text-decoration: none;
+    }
+    .breadcrumb-trail a:hover {
+      text-decoration: underline;
+    }
+    .breadcrumb-trail .divider {
+      color: #b0b8cc;
+    }
+    .breadcrumb-trail .active-node {
+      color: #333333;
+      font-weight: 500;
+    }
+    .header-actions {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .utility-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7a93;
+      font-size: 15px;
+      padding: 5px;
+      border-radius: 4px;
+    }
+    .utility-btn:hover {
+      background: #f0f2f5;
+      color: #1a3a6e;
+    }
+    .profile-thumbnail {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #2563c7;
+      color: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Component Architecture */
+    .content-container {
+      padding: 20px 24px;
+      flex: 1;
+    }
+    .view-heading {
+      font-size: 16px;
+      font-weight: 600;
+      color: #1a3a6e;
+      margin-bottom: 18px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid #2563c7;
+      display: inline-block;
+    }
+    .ui-panel-card {
+      background: #ffffff;
+      border: 1px solid #dde2ea;
+      border-radius: 6px;
+      padding: 18px 20px;
+      margin-bottom: 20px;
+    }
+    .panel-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7a93;
+      text-transform: uppercase;
+      letter-spacing: 0.7px;
+      margin-bottom: 12px;
+    }
+
+    /* Form Grid Construction */
+    .responsive-form-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px 24px;
+      align-items: flex-end;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+    }
+    .input-label {
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7a93;
+      text-transform: uppercase;
+    }
+    .input-label .required-mark {
+      color: #e0423a;
+      margin-left: 2px;
+    }
+    .control-input {
+      height: 34px;
+      border: 1px solid #c8d0dd;
+      border-radius: 4px;
+      padding: 0 10px;
+      font-size: 13px;
+      color: #333333;
+      outline: none;
+      transition: all 0.15s ease-in-out;
+    }
+    .control-input:focus {
+      border-color: #2563c7;
+      box-shadow: 0 0 0 3px rgba(37, 99, 199, 0.1 linear);
+    }
+    .search-input-container {
+      position: relative;
+    }
+    .search-input-container .control-input {
+      padding-right: 32px;
+    }
+    .search-embedded-icon {
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9aa5b8;
+      font-size: 13px;
+      pointer-events: none;
+    }
+
+    /* Multi-value Selector Chips */
+    .chip-container-box {
+      min-height: 34px;
+      border: 1px solid #c8d0dd;
+      border-radius: 4px;
+      padding: 4px 8px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 5px;
+      align-items: center;
+      background: #ffffff;
+    }
+    .chip-container-box:focus-within {
+      border-color: #2563c7;
+    }
+    .tag-chip {
+      background: #e8edf8;
+      border-radius: 12px;
+      padding: 2px 8px 2px 10px;
+      font-size: 12px;
+      color: #1a3a6e;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-weight: 500;
+    }
+    .tag-chip .remove-chip-trigger {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #6b7a93;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+    }
+    .tag-chip .remove-chip-trigger:hover {
+      color: #e0423a;
+    }
+
+    /* Dropdown Overrides */
+    .control-select {
+      height: 34px;
+      border: 1px solid #c8d0dd;
+      border-radius: 4px;
+      padding: 0 28px 0 10px;
+      font-size: 13px;
+      color: #333333;
+      background: #ffffff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239aa5b8'/%3E%3C/svg%3E") no-repeat right 10px center;
+      appearance: none;
+      cursor: pointer;
+      outline: none;
+    }
+    .control-select:focus {
+      border-color: #2563c7;
+    }
+
+    /* Layout Button Actions Bar */
+    .form-actions-row {
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      margin-top: 16px;
+      padding-top: 14px;
+      border-top: 1px solid #eef0f5;
+    }
+    .action-btn {
+      height: 34px;
+      padding: 0 16px;
+      border-radius: 4px;
+      border: none;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.15s ease;
+    }
+    .action-btn-primary {
+      background: #2563c7;
+      color: #ffffff;
+    }
+    .action-btn-primary:hover {
+      background: #1a4fa0;
+    }
+    .action-btn-secondary {
+      background: #ffffff;
+      color: #6b7a93;
+      border: 1px solid #c8d0dd;
+    }
+    .action-btn-secondary:hover {
+      background: #f4f6fa;
+      border-color: #aab0be;
+    }
+
+    /* Sub-Table Header Toolbar */
+    .table-header-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .table-utility-filter {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      background: #ffffff;
+      border: 1px solid #c8d0dd;
+      border-radius: 4px;
+      padding: 5px 12px;
+      font-size: 12px;
+      color: #6b7a93;
+      cursor: pointer;
+    }
+    .table-record-counter {
+      font-size: 12px;
+      color: #9aa5b8;
+    }
+
+    /* Structured Data Grid Styles */
+    .table-scroll-container {
+      overflow-x: auto;
+      border: 1px solid #dde2ea;
+      border-radius: 6px;
+    }
+    .data-grid-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12.5px;
+    }
+    .data-grid-table thead tr {
+      background: #f4f6fa;
+      border-bottom: 2px solid #dde2ea;
+    }
+    .data-grid-table th {
+      padding: 12px 14px;
+      text-align: left;
+      font-size: 11px;
+      font-weight: 600;
+      color: #6b7a93;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .data-grid-table th.sort-indicator {
+      cursor: pointer;
+      user-select: none;
+    }
+    .data-grid-table th.sort-indicator:hover {
+      color: #1a3a6e;
+    }
+    .data-grid-table tbody tr {
+      border-bottom: 1px solid #eef0f5;
+      transition: background-color 0.1s ease;
+    }
+    .data-grid-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    .data-grid-table tbody tr:hover {
+      background-color: #f8f9fc;
+    }
+    .data-grid-table td {
+      padding: 12px 14px;
+      color: #444444;
+      vertical-align: middle;
+    }
+
+    /* Status Label Pills */
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 2px 8px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+    .status-nri { background: #e8f4fd; color: #1a6dad; }
+    .status-corporate { background: #fff0e6; color: #b45c0a; }
+    .status-denied { background: #fef2f2; color: #b91c1c; }
+    
+    .masked-data-preview {
+      color: #9aa5b8;
+      letter-spacing: 1px;
+      font-size: 12px;
+      font-family: monospace, Courier;
+    }
+    .row-action-set {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+      justify-content: center;
+    }
+    .row-action-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #9aa5b8;
+      font-size: 14px;
+      padding: 4px;
+      border-radius: 4px;
+      transition: all 0.15s;
+    }
+    .row-action-icon:hover {
+      color: #2563c7;
+      background: #e8edf8;
+    }
+    .row-action-icon.destruct-action:hover {
+      color: #e0423a;
+      background: #fef2f2;
+    }
+
+    /* Empty Result Graphic Layer */
+    .no-data-placeholder {
+      text-align: center;
+      padding: 45px 20px;
+      color: #9aa5b8;
+    }
+
+    /* Alert Message Engine Layout */
+    .alert-toast-box {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: #1a3a6e;
+      color: #ffffff;
+      padding: 12px 20px;
+      border-radius: 6px;
+      font-size: 13px;
+      box-shadow: 0 4px 16px rgba(0,0,0,0.15);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      transform: translateY(100px);
+      opacity: 0;
+      transition: transform 0.3s ease, opacity 0.3s ease;
+      z-index: 1000;
+    }
+    .alert-toast-box.is-visible {
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .alert-toast-box.state-success {
+      background: #16a34a;
+    }
+    .toast-close-trigger {
+      background: none;
+      border: none;
+      color: rgba(255,255,255,0.7);
+      cursor: pointer;
+      font-size: 16px;
+      margin-left: 6px;
+    }
+
+    /* Responsive Adaptation System */
+    @media (max-width: 768px) {
+      .responsive-form-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+
+<aside class="app-sidebar">
+  <div class="brand-logo">L</div>
+  <div class="nav-item is-active" title="Dashboard">&#9632;</div>
+  <div class="nav-item" title="Users">&#128100;</div>
+  <div class="nav-item" title="Configuration">&#9881;</div>
+  <div class="nav-item" title="Analytics">&#128202;</div>
+  <div class="nav-item" title="Support" style="margin-top: auto; margin-bottom: 10px;">&#63;</div>
+</aside>
+
+<div class="workspace-wrapper">
+  <nav class="header-bar">
+    <span class="header-title">Console</span>
+    <div class="breadcrumb-trail">
+      <a href="#">Home</a>
+      <span class="divider">›</span>
+      <a href="#">Admin</a>
+      <span class="divider">›</span>
+      <span class="active-node">Access Control</span>
+    </div>
+    <div class="header-actions">
+      <button class="utility-btn" title="Alerts">&#128276;</button>
+      <button class="utility-btn" title="Documentation">&#63;</button>
+      <div class="profile-thumbnail" title="Current Session Profile">BM</div>
+    </div>
+  </nav>
+
+  <main class="content-container">
+    <h1 class="view-heading">Maintain Role Level Access Control</h1>
+
+    <section class="ui-panel-card">
+      <div class="panel-section-title">Search Criteria</div>
+      <div class="responsive-form-grid">
+        
+        <div class="input-group">
+          <label class="input-label" for="txtRoleInput">Role <span class="required-mark">*</span></label>
+          <div class="search-input-container">
+            <input class="control-input" id="txtRoleInput" type="text" placeholder="Branch Manager" value="Branch Manager" />
+            <span class="search-embedded-icon">&#128269;</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label" for="selControlType">Access Control Type <span class="required-mark">*</span></label>
+          <select class="control-select" id="selControlType">
+            <option value="">-- Choose Option --</option>
+            <option value="field" selected>Field Level</option>
+            <option value="page">Page Level</option>
+            <option value="action">Action Level</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Case Category</label>
+          <div class="chip-container-box" id="boxCaseCategory">
+            <span class="tag-chip">NRI <button class="remove-chip-trigger" onclick="discardFilterChip(this,'NRI')">×</button></span>
+            <span class="tag-chip">Corporate <button class="remove-chip-trigger" onclick="discardFilterChip(this,'Corporate')">×</button></span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label class="input-label">Case Sub-category</label>
+          <div class="chip-container-box" id="boxSubCategory">
+            <span class="tag-chip">Address Update <button class="remove-chip-trigger" onclick="discardFilterChip(this,'Address Update')">×</button></span>
+            <span class="tag-chip">Stop Check <button class="remove-chip-trigger" onclick="discardFilterChip(this,'Stop Check')">×</button></span>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions-row">
+        <button class="action-btn action-btn-secondary" onclick="resetFilterForm()">Clear</button>
+        <button class="action-btn action-btn-primary" onclick="executeDataFetch()">&#128269; Search</button>
+      </div>
+    </section>
+
+    <section class="ui-panel-card" id="gridPanelComponent">
+      <div class="table-header-toolbar">
+        <div class="panel-section-title" style="margin-bottom: 0;">Access Controls</div>
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <span class="table-record-counter" id="txtGridCount">0 records</span>
+          <button class="table-utility-filter">&#9776; Filter</button>
+        </div>
+      </div>
+
+      <div class="table-scroll-container">
+        <table class="data-grid-table" id="matrixGridTable">
+          <thead>
+            <tr>
+              <th class="sort-indicator">Case Category &#8597;</th>
+              <th class="sort-indicator">Case Sub-category &#8597;</th>
+              <th class="sort-indicator">Field Name &#8597;</th>
+              <th class="sort-indicator">Access Type &#8597;</th>
+              <th>Masking Preview</th>
+              <th style="text-align: center;">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="gridDataTarget">
+            </tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+</div>
+
+<div class="alert-toast-box" id="globalNotificationToast">
+  <span id="txtToastMessageContent">Execution successful</span>
+  <button class="toast-close-trigger" onclick="dismissNotificationToast()">×</button>
+</div>
+
+<script>
+  // Immutable system state mock array
+  const STATIC_RAW_DATA = [
+    { catLabel: "NRI",       subCatLabel: "Address Update", attributeKey: "Address",        permissionType: "No Access", visualMask: "XXXX XXXX XXXX XXXX" },
+    { catLabel: "NRI",       subCatLabel: "Address Update", attributeKey: "Aadhaar Number",  permissionType: "No Access", visualMask: "XXXX XXXX XXXX XXXX" },
+    { catLabel: "NRI",       subCatLabel: "Address Update", attributeKey: "Account Number",  permissionType: "No Access", visualMask: "XXXXXXXXXX"          },
+    { catLabel: "NRI",       subCatLabel: "Address Update", attributeKey: "Related Party",   permissionType: "No Access", visualMask: "XXXX XXXXX XXXXX"    },
+    { catLabel: "NRI",       subCatLabel: "Address Update", attributeKey: "Name",            permissionType: "No Access", visualMask: "XX-XX-XXXX"          },
+    { catLabel: "NRI",       subCatLabel: "Stop Check",     attributeKey: "DOB",             permissionType: "No Access", visualMask: "XXXX XXXX XXXX"      },
+    { catLabel: "Corporate", subCatLabel: "Stop Check",     attributeKey: "Name",            permissionType: "No Access", visualMask: "XXXX XXXX XXXX"      },
+    { catLabel: "Corporate", subCatLabel: "Stop Check",     attributeKey: "DOB",             permissionType: "No Access", visualMask: "XX XXXXXXX XXXXX"    },
+    { catLabel: "Corporate", subCatLabel: "Stop Check",     attributeKey: "Aadhaar Number",  permissionType: "No Access", visualMask: "XXXX XXXX XXXX"      },
+    { catLabel: "Corporate", subCatLabel: "Stop Check",     attributeKey: "Phone Number",    permissionType: "No Access", visualMask: "XX XXXXX XXXXX"      }
+  ];
+
+  // Working state allocation array copying reference framework values
+  let workingDatasetState = [...STATIC_RAW_DATA];
+
+  /**
+   * Refreshes the HTML table matrix with current dataset array memory layout
+   * @param {Array} collection Target records matrix to display
+   */
+  function populateGridTable(collection) {
+    const targetBody = document.getElementById('gridDataTarget');
+    const counterNode = document.getElementById('txtGridCount');
+    
+    // Update total count indicator string context
+    counterNode.textContent = `${collection.length} record${collection.length !== 1 ? 's' : ''}`;
+    
+    // Handle empty data structure conditions natively
+    if (!collection.length) {
+      targetBody.innerHTML = `
+        <tr>
+          <td colspan="6">
+            <div class="no-data-placeholder">
+              <p>No records match your criteria. Please refine filters.</p>
+            </div>
+          </td>
+        </tr>`;
+      return;
+    }
+
+    // Map out and render row instances inside standard fragment literals
+    targetBody.innerHTML = collection.map((item, index) => {
+      const badgeModifier = item.catLabel === 'NRI' ? 'status-nri' : 'status-corporate';
+      
+      return `
+        <tr>
+          <td><span class="status-badge ${badgeModifier}">${item.catLabel}</span></td>
+          <td>${item.subCatLabel}</td>
+          <td><strong>${item.attributeKey}</strong></td>
+          <td><span class="status-badge status-denied">${item.permissionType}</span></td>
+          <td><span class="masked-data-preview">${item.visualMask}</span></td>
+          <td>
+            <div class="row-action-set">
+              <button class="row-action-icon" title="Edit Properties" onclick="triggerRowEdit(${index})">&#9998;</button>
+              <button class="row-action-icon destruct-action" title="Remove Entry" onclick="triggerRowRemoval(${index})">&#128465;</button>
+            </div>
+          </td>
+        </tr>`;
+    }).join('');
+  }
+
+  /**
+   * Dispatches trigger alert and re-synchronizes structural table views
+   */
+  function executeDataFetch() {
+    displayFeedbackMessage('Records loaded successfully', 'state-success');
+    workingDatasetState = [...STATIC_RAW_DATA];
+    populateGridTable(workingDatasetState);
+  }
+
+  /**
+   * Empties input elements across form grid segments
+   */
+  function resetFilterForm() {
+    document.getElementById('txtRoleInput').value = '';
+    document.getElementById('selControlType').value = '';
+    document.getElementById('boxCaseCategory').innerHTML = '';
+    document.getElementById('boxSubCategory').innerHTML = '';
+    
+    workingDatasetState = [];
+    populateGridTable(workingDatasetState);
+    displayFeedbackMessage('Form layout criteria cleared');
+  }
+
+  /**
+   * Evaluates UI token instances for disposal
+   */
+  function discardFilterChip(elementHandle, identifierCode) {
+    if(elementHandle && elementHandle.parentElement) {
+      elementHandle.parentElement.remove();
+    }
+  }
+
+  /**
+   * Action script mapping target elements to data row modification calls
+   */
+  function triggerRowEdit(targetIndex) {
+    if(workingDatasetState[targetIndex]) {
+      displayFeedbackMessage(`Editing properties for: ${workingDatasetState[targetIndex].attributeKey}`);
+    }
+  }
+
+  /**
+   * Validates target removal action and shifts working matrix properties
+   */
+  function triggerRowRemoval(targetIndex) {
+    const assetKey = workingDatasetState[targetIndex]?.attributeKey || '';
+    
+    if (confirm(`Are you sure you want to delete access control rules configuration for "${assetKey}"?`)) {
+      workingDatasetState.splice(targetIndex, 1);
+      populateGridTable(workingDatasetState);
+      displayFeedbackMessage('Record configuration removed successfully', 'state-success');
+    }
+  }
+
+  /**
+   * Operates micro internal status message toast boxes
+   */
+  let systemToastTimeoutReference;
+  function displayFeedbackMessage(textContext, statusThemeClass = '') {
+    const toastElement = document.getElementById('globalNotificationToast');
+    const displayNode = document.getElementById('txtToastMessageContent');
+    
+    clearTimeout(systemToastTimeoutReference);
+    
+    displayNode.textContent = textContext;
+    toastElement.className = `alert-toast-box ${statusThemeClass} is-visible`;
+    
+    systemToastTimeoutReference = setTimeout(() => {
+      dismissNotificationToast();
+    }, 3000);
+  }
+
+  function dismissNotificationToast() {
+    document.getElementById('globalNotificationToast').classList.remove('is-visible');
+  }
+
+  // Initial runtime construction hook
+  window.addEventListener('DOMContentLoaded', () => {
+    populateGridTable(workingDatasetState);
+  });
+</script>
+</body>
+</html>
